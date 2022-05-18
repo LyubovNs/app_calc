@@ -1,4 +1,5 @@
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Dispatcher
+from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
+                          ConversationHandler)
 import logging
 import venv
 
@@ -42,9 +43,6 @@ def echo(update, context):
     elif ("off" == command):
         context.user_data[echo] = False
         update.message.reply_text("Repeater Stopped")
-
-
-
 
 start_bot()
 
