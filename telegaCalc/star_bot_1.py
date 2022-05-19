@@ -1,3 +1,5 @@
+# с помощью библиотеки python-telegram-bot
+
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
                           ConversationHandler)
 import logging

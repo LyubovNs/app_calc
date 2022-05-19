@@ -25,15 +25,3 @@ def get_text_messages(message):
 
 #
 
-
-
-
-
-
-
-
-
-
-#проверка на новые сообщения
-bot.polling(none_stop=True, interval=0)
-
