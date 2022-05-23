@@ -5,6 +5,7 @@ import logging
 from telegram import message
 
 import config
+from config import token, get_m, month_check, day, get_s, prep
 
 #логирование
 logging.basicConfig(format='%(levelname)s - %(message)s',
@@ -76,12 +77,20 @@ def month(message):
         #  сообщение пользователю - выбрать месяц
         msg = bot.send_message(message.from_user.id, 'Выберите месяц', reply_markup=month)
 
-        # для связи функци - принимает в себя сообщение из текущей и говорит о том, что оно будет обработано в следующей функции salary
+        # для связи функци - принимает в себя сообщение из текущей и говорит о том, что оно будет обработано в следующей функции salary, а также записана в record_m
+        bot.register_next_step_handler(msg, record_m)
+
         bot.register_next_step_handler(msg, salary)
     else:
         # если будет отправлено что-то иное - возврат в предыдущее меню
         send_welcome(message)
         return
+
+# запись ответа (месяц)
+
+def record_m():
+    global month
+    month = message.text
 
 
 # функция ввода оклада пользователем
@@ -106,7 +115,9 @@ def salary(message):
             or message.text == 'Декабрь':
             # сообщение пользователю ввести оклад
             msg = bot.send_message(message.from_user.id, 'Введите оклад за месяц с НДС: ', reply_markup=salary)
-            # для связи функци - принимает в себя сообщение из текущей и говорит о том, что оно будет обработано в следующей функции salary
+            # для связи функци - принимает в себя сообщение из текущей и говорит о том, что оно будет обработано в следующей функции salary и запись в record_s
+            bot.register_next_step_handler(msg, record_s)
+
             bot.register_next_step_handler(msg, prepay)
 
         else:
@@ -114,44 +125,45 @@ def salary(message):
             month(message)
             return
 
+# запись ответа (месяц)
+
+def record_s():
+    global salary
+    salary = message.text
+
 
 # Расчет аванса
 
 def prepay(message):
     # проверка работы предыдущей функции
+    # кнопки
+    salary = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    salary.row('Назад')
+
     if message.text == 'Назад':
         salary(message)
         return
     else:
         if message.text.isdigit():
-            msg = bot.send_message(message.from_user.id, 'Приступаю к расчету')
+            get_m()
+            month_check()
+            day()
+            get_s()
+            prep()
+
+            msg = bot.send_message(message.from_user.id, prep())
+
+
+
+
+
+
+
         elif message.text == 'Назад':
             salary(message)
         else:
             salary(message)
             return
-
-
-# Расчет аванса
-
-
-
-
-
-
-
-#
-# # расчет аванса
-# # вывод оклада без НДС
-# print('Оклад без НДС:', oklad)
-#
-# # расчет и вывод оклада с НДС
-# oklad = round((oklad - ((oklad * 13) / 100)), 2)
-# print('Оклад с НДС:', oklad)
-#
-# # расчет и вывод аванса с НДС
-# avans = round(((oklad / businessdays) * firsthalf), 2)
-# print('Аванс: ', avans)
 
 
 
