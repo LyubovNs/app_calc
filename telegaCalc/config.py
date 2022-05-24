@@ -1,3 +1,5 @@
+# файл конфига с токеном
+
 import telebot
 import datetime
 from telegram import message

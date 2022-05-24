@@ -1,6 +1,7 @@
+# рабочий код на две кнопки
+
 import telebot
 from telebot import types
-from telegram import message
 import logging
 import datetime
 import config
@@ -45,7 +46,7 @@ def send_welcome(message):
     # сообщение пользователю - приветствие
     msg = bot.send_message(message.from_user.id, welcome_message['start'].format(name=message.from_user.id), reply_markup=markup)
 
-    # для связи функци - принимает в себя сообщение из текущей и говорит о том, что оно будет обработано в следующей функции month
+    # для связи функци - принимает в себя сообщение из текущей и говорит о том, что оно будет обработано в следующей функции monthes
     bot.register_next_step_handler(msg, monthes)
 
 
@@ -85,9 +86,18 @@ def monthes(message):
         return
 
 
+# запись ответа (месяц)
+
+def record_m(message):
+    global month_u
+    month_u = message.text
+
+    month_check()
+
+
 # нумерация месяцов
 
-def month_check(month_u):
+def month_check():
      global month
      if month_u == 'Январь':
          month = 1
@@ -117,22 +127,13 @@ def month_check(month_u):
      return month
 
 
-# запись ответа (месяц)
-
-def record_m(message):
-    global month_u
-    month_u = message.text
-
-    month_check(month_u)
-
-
 # функция ввода оклада пользователем
 
 @bot.message_handler(content_type=['text'])
 def salary(message):
     # кнопки
-    salary = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    salary.row('Назад')
+    # salary = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    # salary.row('Назад')
 
     # проверка работы предыдущей функции
     if message.text == 'Назад':
@@ -147,7 +148,7 @@ def salary(message):
             or message.text == 'Ноябрь' \
             or message.text == 'Декабрь':
             # сообщение пользователю ввести оклад
-            msg = bot.send_message(message.from_user.id, 'Введите оклад за месяц с НДС: ', reply_markup=salary)
+            msg = bot.send_message(message.from_user.id, 'Введите оклад за месяц с НДС: ')
             # для связи функци - принимает в себя сообщение из текущей и говорит о том, что оно будет обработано в следующей функции salary и запись в record_s
             bot.register_next_step_handler(msg, record_s)
 
@@ -162,15 +163,15 @@ def salary(message):
 # запись ответа (оклад)
 
 def record_s(message):
-    global salary
-    salary = int(message.text)
-    return salary
+    global salary_u
+    salary_u = int(message.text)
+    return salary_u
 
 
  # Количество рабочих, праздничных дней в месяце
  # расчет количества рабочих дней в первой и второй половине месяца
 
-def day(month):
+def day():
      global holidays
      global businessdays
      global firsthalf
@@ -273,10 +274,10 @@ def prep():
      cancel.row('В начало')
 
      # расчет и вывод оклада с НДС
-     oklad = round((salary - ((salary * 13) / 100)), 2)
+     oklad = round((salary_u - ((salary_u * 13) / 100)), 2)
      # print('Оклад с НДС:', oklad)
 
-     day(month)
+     day()
 
      # расчет и вывод аванса с НДС
      avans = round(((oklad / businessdays) * firsthalf), 2)
@@ -307,8 +308,6 @@ def prepay(message):
 def start(message):
     if message.text == '/start' or message.text == 'В начало':
         send_welcome(message)
-        return
-
 
 
 #проверка на новые сообщения

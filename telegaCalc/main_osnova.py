@@ -1,3 +1,5 @@
+# основной рабочий код (для запуска через консоль)
+
 # import calendar
 import datetime
 # import weekday
