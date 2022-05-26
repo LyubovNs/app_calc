@@ -1,9 +1,15 @@
 # рабочий код на одну кнопку
+# сделан вывод сумм в одном сообщении
+# настроены кнопки назад из каждого подменю
+# сделана проверка на ввод оклада
 
 import telebot
 from telebot import types
 import logging
 import datetime
+
+from telegram import message
+
 import config
 
 #логирование
@@ -21,11 +27,13 @@ welcome_message = {
     'start':
         u'Здравствуй, {name}\n'
         u'Я умею рассчитывать аванс и зарплату, но пока не умею считать отпускные.\n\n'
-        u'Давай попробуем.\n'
         u'Нажимай: "Хочу зарплату и аванс"',
 
     'help':
-        u'Нажимай: "Хочу зарплату и аванс"'
+        u'Нажимай: "Хочу зарплату и аванс"',
+
+    'Назад':
+        u'Назад'
     }
 
 # month_message = {
@@ -57,7 +65,7 @@ def monthes(message):
     m = types.ReplyKeyboardMarkup(resize_keyboard=True)
 
     # проверка работы предыдущей функции
-    if message.text == 'Хочу зарплату и аванс':
+    if message.text == 'Хочу зарплату и аванс' or message.text == '/start' or message.text == 'Назад':
         m.row('Январь')
         m.row('Февраль')
         m.row('Март')
@@ -70,6 +78,7 @@ def monthes(message):
         m.row('Октябрь')
         m.row('Ноябрь')
         m.row('Декабрь')
+        m.row('Назад')
 
         #  сообщение пользователю - выбрать месяц
         msg = bot.send_message(message.from_user.id, 'Выберите месяц', reply_markup=m)
@@ -78,18 +87,20 @@ def monthes(message):
         bot.register_next_step_handler(msg, record_m)
 
         bot.register_next_step_handler(msg, salary)
-    else:
-        # если будет отправлено что-то иное - возврат в предыдущее меню
-        send_welcome(message)
-        return
 
 
 # запись ответа (месяц)
 
 def record_m(message):
     global month_u
-    month_u = message.text
-    month_check()
+    # для возврата в предыдущее меню send_welcome
+    if message.text == 'Назад':
+       send_welcome(message)
+       return
+    # переход в функцию нумерации месяцев
+    else:
+        month_u = message.text
+        month_check()
 
 
 # нумерация месяцов
@@ -131,23 +142,19 @@ def salary(message):
     mon_r = types.ReplyKeyboardMarkup(resize_keyboard=True)
     mon_r.row('Назад')
 
-    # проверка работы предыдущей функции
+    # проверка работы предыдущей функции monthes - на верный ввод месяца
     if message.text == 'Январь' or message.text == 'Февраль' \
             or message.text == 'Март' or message.text == 'Апрель' \
             or message.text == 'Май' or message.text == 'Июнь' or message.text == 'Июль' \
             or message.text == 'Август' \
             or message.text == 'Сентябрь' or message.text == 'Октябрь' \
             or message.text == 'Ноябрь' \
-            or message.text == 'Декабрь':
+            or message.text == 'Декабрь':\
             # сообщение пользователю ввести оклад
-            msg = bot.send_message(message.from_user.id, 'Введите оклад за месяц с НДС: ', reply_markup=mon_r)
+            msg = bot.send_message(message.from_user.id, 'Введите оклад за месяц с НДС', reply_markup=mon_r)
             # для связи функци - принимает в себя сообщение из текущей и говорит о том, что оно будет обработано в следующей функции salary и запись в record_s
             bot.register_next_step_handler(msg, record_s)
-            bot.register_next_step_handler(msg, prepay)
-    else:
-         # если будет отправлено что-то иное - возврат в предыдущее меню
-         monthes(message)
-         return
+            # bot.register_next_step_handler(msg, prepay)
 
 
  # Количество рабочих, праздничных дней в месяце
@@ -239,37 +246,62 @@ def day():
              secondhalf += 1
 
      return holidays, businessdays, firsthalf, secondhalf
-     # return businessdays
-     # return firsthalf
-     # return secondhalf
 
 
-# запись ответа (оклад)
+# запись ответа (оклад) и проверка введенного в salary(message)
+
+# def record_s(message):
+#     global salary_u
+#
+#     if message.text == 'Назад':
+#         monthes(message)
+#     else:
+#         salary_u = message.text
+#         try:
+#             if salary_u.isdigit():
+#                 salary_u = int(message.text)
+#                 return salary_u
+#                 prep()
+#         except ValueError:
+#             bot.send_message(message.from_user.id, 'Не понимаю, начни заново - /start')
+
 
 def record_s(message):
     global salary_u
-
+     # возврат в предыдущее меню для выбора месяца - monthes
     if message.text == 'Назад':
-        send_welcome(message)
-    else:
-        salary_u = int(message.text)
-        return salary_u
-        prep()
+        monthes(message)
+    # проверка, что введенный оклад - число и переход к функции вычисления prep
+    elif message.text.isdigit():
+        salary_u = message.text
+        prepay(message)
 
-# Расчет
+        # return salary_u
+        # bot.register_next_step_handler(msg, prep)
+    else:
+    # обработка ввода текстовых символов - запись в верного значения в record_s и в prepay
+        try:
+            msg = bot.send_message(message.from_user.id, 'Не понимаю, введи число или нажми "Назад"')
+            bot.register_next_step_handler(msg, record_s)   #за счет записи в саму себя будет работать до тех пора, пока не будет введено число
+            # bot.register_next_step_handler(msg, prepay)
+        except ValueError:
+            msg = bot.send_message(message.from_user.id, 'Не понимаю, введи число или начни заново /start')
+
+
+# Расчет аванса и зарплаты
 
 def prep():
      global oklad
      global avans
      global zp
-     # кнопки
-     cancel = types.ReplyKeyboardMarkup(resize_keyboard=True)
-     cancel.row('В начало')
+
+     num = int(salary_u)
 
      # расчет и вывод оклада с НДС
-     oklad = round((salary_u - ((salary_u * 13) / 100)), 2)
+     oklad = round((num - ((num * 13) / 100)), 2)
      # print('Оклад с НДС:', oklad)
 
+     # вызов функции для расчета рабочих, праздничны дней
      day()
 
      # расчет и вывод аванса с НДС
@@ -280,31 +312,32 @@ def prep():
      return avans, zp
 
 
-# Расчет аванса и зарплаты
+# Вывод аванса и зарплаты
 @bot.message_handler(content_type=['text'])
 def prepay(message):
     # кнопки
     cancel = types.ReplyKeyboardMarkup(resize_keyboard=True)
     cancel.row('В начало')
 
-    if message.text.isdigit():
-        prep()
+    # if message.text == 'Назад':   #закомментировано, так как проверка предыдущей функции def salary(message) выполняется в record_s
+    #     monthes(message)
+    # if message.text.isdigit():
+    prep()
+    msg = bot.send_message(message.from_user.id, (f'Аванс: {avans}\n' 
+                                                  f'Зарплата: {zp}'))
+    # для связи функци - принимает в себя сообщение из текущей и говорит о том, что оно будет обработано в следующей функции start для возврата в главное меню
+    msg = bot.send_message(message.from_user.id, 'Для повторного расчета нажми "/start"', reply_markup=cancel)
+    bot.register_next_step_handler(msg, start)
+    # else:
+    salary(message)
 
 
-        msg = bot.send_message(message.from_user.id, (f'Аванс: {avans}\n' 
-                                                      f'Зарплата: {zp}'))
-        # msg = bot.send_message(message.from_user.id, (f'Зарплата: {zp}'))
-
-        msg = bot.send_message(message.from_user.id, 'Для повторного расчета нажми "/start"', reply_markup=cancel)
-
-        bot.register_next_step_handler(msg, start)
-
-
+# Переход к началу
 def start(message):
     if message.text == '/start' or message.text == 'В начало':
         send_welcome(message)
 
 
-#проверка на новые сообщения
+# проверка на новые сообщения
 bot.polling(none_stop=True, interval=0)
 
