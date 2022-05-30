@@ -1,1 +1,0 @@
-import checksalary_2
