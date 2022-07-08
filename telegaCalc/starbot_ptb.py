@@ -1,5 +1,6 @@
-from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
-                          ConversationHandler)
+# с помощью библиотеки python-telegram-bot
+
+from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, ConversationHandler)
 import logging
 import venv
 
@@ -28,8 +29,9 @@ def start_bot():
 
 
 def start(update, context):
-    s = "Расчет зарплаты и аванса"
+    s = "Напиши 'Аванс' или 'Зарплата'"
     update.message.reply_text(s)
+
 
 def repeater(update, context):
     if context.user_data[echo]:
