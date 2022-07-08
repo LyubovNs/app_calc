@@ -25,5 +25,3 @@ def restricted(func):
             return
         return func(update, context, *args, **kwargs)
     return wrapped
-
-

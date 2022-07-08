@@ -94,7 +94,7 @@ def monthes(message):
 def record_m(message):
     global month_u
     # для возврата в предыдущее меню send_welcome
-    if message.text == 'Назад':
+    if message.text == 'Назад' or message.text == '/start':
        send_welcome(message)
        return
     # переход в функцию нумерации месяцев
