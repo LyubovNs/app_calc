@@ -10,15 +10,13 @@ import datetime
 
 from telegram import message
 
-import config
-
 #логирование
 logging.basicConfig(format='%(levelname)s - %(message)s',
                     level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 #указание токена бота из файла конфига
-bot = telebot.TeleBot(config.token)
+bot = telebot.TeleBot('5352935775:AAENA4YzYLSlHp6jqdfI3mR9wOK89o7aGaw')
 
 
 #тело приветствия
